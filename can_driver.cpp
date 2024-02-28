@@ -8,7 +8,7 @@
 // 10.31.2022: Improved Web Request Processing
 // 11.11.2022: Created separate cpp files for can_bridge_manager common, leaf and env200
 // 11.18.2022: Added CURRENT_CONTROL_ENABLED equivalent to CHARGECURRENT from leaf-can-bridge-3-port-master project
-// 11.26.2022: Integrated configurable parameters for: BATTERY_SAVER_ENABLED/DISABLED, GLIDE_IN_DRIVE_ENABLED/DISABLED, CAPACITY_BOOST_ENABLED/DISABLED
+// 11.26.2022: Integrated configurable parameters for: BATTERY_SAVER_ENABLED/DISABLED, GLIDE_IN_DRIVE_ENABLED/DISABLED, 
 // 12.02.2022: Updated CHARGECURRENT implementation for ID0x54B using CurrentControl Web parameters
 // 12.04.2022: Merging of Inverter Upgrade based on https://github.com/dalathegreat/Nissan-LEAF-Inverter-Upgrade/blob/main/can-bridge-inverter.c
 // 12.06.2022: Updated Charge Current logic - 1) Start conditions are charging state and fan speed; 2) Display kW for 15sec and revert to SOC
@@ -57,8 +57,8 @@
 // GPIO23:CAN0_INT  <-  PIN10:INT
 //——————————————————————————————————————————————————————————————————————————————
 static const byte MCP2515_SCK_CAN0  = 26; // SCK input of MCP2515
-static const byte MCP2515_MOSI_CAN0 = 18; // SDI input of MCP2515 changesd from 19
-static const byte MCP2515_MISO_CAN0 = 19; // SDO output of MCP2515 changed from 18
+static const byte MCP2515_MOSI_CAN0 = 19; // SDI input of MCP2515 changesd from 19
+static const byte MCP2515_MISO_CAN0 = 18; // SDO output of MCP2515 changed from 18
 static const byte MCP2515_CS_CAN0   = 27; // CS input of MCP2515
 static const byte MCP2515_INT_CAN0  = 23; // INT output of MCP2515
 
@@ -74,8 +74,8 @@ static const byte MCP2515_INT_CAN0  = 23; // INT output of MCP2515
 // GPIO22:CAN1_INT  <-  PIN10:INT
 //——————————————————————————————————————————————————————————————————————————————
 static const byte MCP2515_SCK_CAN1  = 26; // SCK input of MCP2515
-static const byte MCP2515_MOSI_CAN1 = 18; // SDI input of MCP2515 cahnged from 19
-static const byte MCP2515_MISO_CAN1 = 19; // SDO output of MCP2515 changed from 18
+static const byte MCP2515_MOSI_CAN1 = 19; // SDI input of MCP2515 cahnged from 19
+static const byte MCP2515_MISO_CAN1 = 18; // SDO output of MCP2515 changed from 18
 static const byte MCP2515_CS_CAN1   = 15; // CS input of MCP2515
 static const byte MCP2515_INT_CAN1  = 22; // INT output of MCP2515
 
@@ -327,10 +327,10 @@ void CAN2_onReceive(int packetSize) {
     Serial.println("CAN2 Reception interruption is > 8");
     #endif //#SERIAL_DEBUG_MONITOR
   }
- // else {
+  else {
     //Push to CAN0/CAN1 Tx buffer
-//    LEAF_CAN_Handler(CAN_CHANNEL_2, rx_frame);
-//  }
+    LEAF_CAN_Handler(CAN_CHANNEL_2, rx_frame);
+  }
      
   #ifdef SERIAL_DEBUG_MONITOR   
    Serial.print("CAN2 Received:");

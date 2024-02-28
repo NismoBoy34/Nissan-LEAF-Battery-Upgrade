@@ -10,7 +10,7 @@
 // 11.10.2022: Completed dynamic configurations for the following: LEAF_2011, LEAF_2014, E_NV_200, BATTERY_SWAP & BATTERY_SAVER
 // 11.11.2022: Created separate cpp files for can_bridge_manager common, leaf and env200
 // 11.18.2022: Added CURRENT_CONTROL_ENABLED equivalent to CHARGECURRENT from leaf-can-bridge-3-port-master project
-// 11.26.2022: Integrated configurable parameters for: BATTERY_SAVER_ENABLED/DISABLED, GLIDE_IN_DRIVE_ENABLED/DISABLED, CAPACITY_BOOST_ENABLED/DISABLED
+// 11.26.2022: Integrated configurable parameters for: BATTERY_SAVER_ENABLED/DISABLED, GLIDE_IN_DRIVE_ENABLED/DISABLED, 
 // 12.02.2022: Updated CHARGECURRENT implementation for ID0x54B using CurrentControl Web parameters
 // 12.04.2022: Merging of Inverter Upgrade based on https://github.com/dalathegreat/Nissan-LEAF-Inverter-Upgrade/blob/main/can-bridge-inverter.c
 // 12.06.2022: Updated Charge Current logic - 1) Start conditions are charging state and fan speed; 2) Display kW for 15sec and revert to SOC
@@ -54,7 +54,7 @@
 #define LEAF_TRANSLATION_ENABLED
 
 //Requirement: Un-comment below definition if ID Translation is required
-#define LEAF_BLACKLISTING_ENABLED
+//#define LEAF_BLACKLISTING_ENABLED
 
 //Requirement: Un-comment below definition if Brutforce is required
 //#define LEAF_BRUTEFORCE_UPGRADE
@@ -124,7 +124,7 @@
 
 /* Slow-charging defines */
 #define MAX_VOLTAGE 404			  //max voltage for slow charging (ZE0 now charging to higher than 393!)
-//#define MAX_CELL_VOLTAGE 4200	//max cell voltage for fast and slow charging (4222 absolute max under some conditions)
+
 
 /* Quick-charging defines */
 #define MIN_QC_POWER 40			//in 0.025kW steps, so 40=1kW
@@ -176,12 +176,6 @@
 #define GLIDE_IN_DRIVE_DISABLED()   (Glide_In_Drive == Glide_In_Drive_Disabled)
 
 //--------------------------------------
-// Capacity Boost
-//--------------------------------------
-#define CAPACITY_BOOST_ENABLED()  (Capacity_Boost == Capacity_Boost_Enabled)
-#define CAPACITY_BOOST_DISABLED() (Capacity_Boost == Capacity_Boost_Disabled)
-
-//--------------------------------------
 // CurrentControl
 //--------------------------------------
 #define CURRENT_CONTROL_1p0_KW()            (Current_Control == CurrentControl_1p0_kW)
@@ -210,9 +204,6 @@ extern uint8_t Battery_Saver;
 
 void Set_Glide_In_Drive(String setValue);
 extern uint8_t Glide_In_Drive;
-
-void Set_Capacity_Boost(String setValue);
-extern uint8_t Capacity_Boost;
 
 void Set_Current_Control(String setValue);
 extern uint8_t Current_Control;
@@ -260,11 +251,7 @@ void WebRequestProcessing(const String data);
 #define Glide_In_Drive_Enabled  (0)
 #define Glide_In_Drive_Disabled (1)
 
-//--------------------------------------
-// Capacity Boost
-//--------------------------------------
-#define Capacity_Boost_Enabled  (0)
-#define Capacity_Boost_Disabled (1)
+
 
 //--------------------------------------
 // CurrentControl
@@ -282,11 +269,24 @@ void WebRequestProcessing(const String data);
 #define CHARGECURRENT        //if defined, enables setting current limiters while car is charging
 #define RAPIDGATEDODGER      //if defined, enables throttling of DC fastcharging via HVAC controls
 #define DISABLE_REGEN_IN_DRIVE    //For maximum hypermiling. When you shift from D->N, the regen gets disabled in D. Do another shift to N to re-enable regen.
-#define BATTERY_SAVER
 
 #define   SHIFT_P   0x00
 #define   SHIFT_D   0x40 //Modified, no longer following mux standard
 #define   SHIFT_N   0x30
 #define   SHIFT_R   0x20
+
+//=---------------------testing can bridge crash on battery side 
+#define MESSAGE_0x284 // common with inverter
+#define MESSAGE_0x1DA //-common with inverter
+#define MESSAGE_0x1DB 
+#define MESSAGE_0x50B 
+#define MESSAGE_0x50C //common with inverter
+#define MESSAGE_0x55B //common with inverter
+#define MESSAGE_0x5BC 
+#define MESSAGE_0x5C0 
+#define MESSAGE_0x59E 
+#define MESSAGE_0x68C
+#define MESSAGE_0x603 //common with inverter
+//#define MESSAGE_0x1F2 //disabled due to crashing on 62kwh installed vehicle with inverter upgrade 
 
 #endif //CONFIG_H

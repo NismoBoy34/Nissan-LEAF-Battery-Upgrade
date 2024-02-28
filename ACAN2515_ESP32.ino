@@ -1,4 +1,10 @@
-//——————————————————————————————————————————————————————————————————————————————
+//V1.4 62Kwh and ze0 ready 
+//Can Channel 1 and Can Channel 2 are only used !————————————————————————————————————————————————————————————————
+//Esp32 Can controller on CAN_CH2 / PCB Pins 4 and 8 CAN-C label (BATTERY SIDE ) CAN2
+//Mcp2515 on Channel - CAN_CH1 / PCB Pins 3 and 5 CAN-B Label (VCM SIDE ) CAN1
+//Adam slim down Battery only version Changed 0x284 to send messages to battery also need to add in current control ? 
+// fixed messages in 0x55b and 0x50c
+//dala light v1——————————————————————————————————————————————————————————————————————————————
 // Description: CAN translation strategy
 // Author: Adam Saiyad, Julius Calzada (julius.jai@gmail.com)
 // Revision: v1.3.0
@@ -9,11 +15,12 @@
 // 10.31.2022: Improved Web Request Processing
 // 11.11.2022: Created separate cpp files for can_bridge_manager common, leaf and env200
 // 11.18.2022: Added CURRENT_CONTROL_ENABLED equivalent to CHARGECURRENT from leaf-can-bridge-3-port-master project
-// 11.26.2022: Integrated configurable parameters for: BATTERY_SAVER_ENABLED/DISABLED, GLIDE_IN_DRIVE_ENABLED/DISABLED, CAPACITY_BOOST_ENABLED/DISABLED
+// 11.26.2022: Integrated configurable parameters for: BATTERY_SAVER_ENABLED/DISABLED, GLIDE_IN_DRIVE_ENABLED/DISABLED, 
 // 12.02.2022: Updated CHARGECURRENT implementation for ID0x54B using CurrentControl Web parameters
 // 12.04.2022: Merging of Inverter Upgrade based on https://github.com/dalathegreat/Nissan-LEAF-Inverter-Upgrade/blob/main/can-bridge-inverter.c
 // 12.06.2022: Updated Charge Current logic - 1) Start conditions are charging state and fan speed; 2) Display kW for 15sec and revert to SOC
 // 12.31.2022: Fix charge current functions Fix regen power and motor power Fix Glide and drive add code All in leaf.cpp
+//attempt to disable other sketches Disable selection of env200 in acan_esp32 \, coment out env200.h and env200 code Disable #define in Config.h for env200
 //——————————————————————————————————————————————————————————————————————————————
 
 //——————————————————————————————————————————————————————————————————————————————
@@ -36,7 +43,7 @@
 #include "can_driver.h"
 #include "can_bridge_manager_common.h"
 #include "can_bridge_manager_leaf.h"
-#include "can_bridge_manager_env200.h"
+//#include "can_bridge_manager_env200.h"
 #include "config.h"
 #include <WiFi.h>
 #include <AsyncTCP.h>
@@ -53,7 +60,6 @@ uint8_t Inverter_Upgrade_110Kw_160Kw;
 uint8_t Battery_Selection;
 uint8_t Battery_Saver;
 uint8_t Glide_In_Drive;
-uint8_t Capacity_Boost;
 uint8_t Current_Control;
 
 //——————————————————————————————————————————————————————————————————————————————
@@ -147,10 +153,10 @@ void setup () {
   digitalWrite (LED_BUILTIN, HIGH) ;
   //WiFi.begin(ssid, password);
   initSPIFFS();
-  WiFi.softAP("Can-Bridge", "Password");
+  WiFi.softAP("LeafBattery-1G", "Leaf4Life");
   IPAddress IP = WiFi.softAPIP();
-  Serial.print("AP IP address: ");
-  Serial.println(IP);
+  //Serial.print("AP IP address: ");
+ // Serial.println(IP);
   
   //Websocket
   initWebSocket();
@@ -182,7 +188,7 @@ void setup () {
   server.onNotFound(notFound);
   AsyncElegantOTA.begin(&server);
   server.begin();
-  Serial.println("[Server] [HTTP] OK");
+  //Serial.println("[Server] [HTTP] OK");
 
   LEAF_CAN_Bridge_Manager_Init();
 }
@@ -204,10 +210,10 @@ void loop () {
     {
 		LEAF_CAN_Bridge_Manager();
     }
-    else if( NISSAN_ENV200() )
+  /*  else if( NISSAN_ENV200() )
     {
 		ENV200_CAN_Bridge_Manager();
-    }
+    }*/
 	else
 	{
 		//Not valid vehicle configuration
@@ -259,7 +265,7 @@ void PREF_Init(void)
   Battery_Selection             = prefs.getUInt("BattSelect", 0);
   Battery_Saver                 = prefs.getUInt("BattSaver", 0);
   Glide_In_Drive                = prefs.getUInt("GlideDrive", 0);
-  Capacity_Boost                = prefs.getUInt("CapBoost", 0);
+  
   Current_Control               = prefs.getUInt("CurrCont", 0);
 
   // Close the Preferences
@@ -281,10 +287,7 @@ void PREF_Init(void)
   
   Serial.println("\n(Stored NVM) Glide_In_Drive = ");
   Serial.print(Glide_In_Drive);
-  
-  Serial.println("\n(Stored NVM) Capacity_Boost = ");
-  Serial.print(Capacity_Boost);
-  
+     
   Serial.println("\n(Stored NVM) Current_Control = ");
   Serial.print(Current_Control);
   #endif //#ifdef DEBUG_NVM_PREFERENCE
@@ -586,52 +589,6 @@ void Set_Glide_In_Drive(String setValue)
   #endif //DEBUG_NVM_PREFERENCE
 }
 
-void Set_Capacity_Boost(String setValue)
-{
-  //--------------------------------------
-  // Input: Radion Button
-  //--------------------------------------  
-  //name="Capacity" id="Capacity1" value="1"
-  //name="Capacity" id="Capacity2" value="0"
-  
-  //--------------------------------------
-  // Ouput: Capacity Boost
-  //--------------------------------------  
-  //#define Capacity_Boost_Enabled  (0)
-  //#define Capacity_Boost_Disabled (1)
-
-  //Ex:
-  // If OTA "Capacity Boost" option is "Enabled"
-  // Set_Capacity_Boost(Capacity_Boost_Enabled);
-
-  // Open the preferences
-  prefs.begin("ESP32", false);
-
-  if(setValue == "1")
-  {   
-    Capacity_Boost = Capacity_Boost_Enabled;
-  }
-  else if(setValue == "0")
-  {
-    Capacity_Boost = Capacity_Boost_Disabled;
-  }
-  else
-  {  
-    Capacity_Boost = Capacity_Boost_Enabled;   
-  }
-
-  //write to flash 
-  prefs.putUInt("CapBoost", Capacity_Boost);
-
-  // Close the Preferences
-  prefs.end();
-
-  //debug NVM value
-  #ifdef DEBUG_NVM_PREFERENCE
-  Serial.println("\n(New NVM) Capacity_Boost = ");
-  Serial.print(Capacity_Boost);
-  #endif //#ifdef DEBUG_NVM_PREFERENCE
-}
 
 void Set_Current_Control(String setValue)
 {
@@ -793,7 +750,6 @@ void WebRequestProcessing(const String data)
   Set_Battery_Selection(temp2[5]);
   Set_Battery_Saver(temp2[7]);
   Set_Glide_In_Drive(temp2[9]);
-  Set_Capacity_Boost(temp2[11]);
   Set_Current_Control(temp2[13]);
 
   //End of Web request processing
@@ -971,21 +927,7 @@ String GetConfigValue(String type)
 			retValue = "Glide1";
 		}
     }  
-    //Capacity Boost
-    //#define CAPACITY_BOOST_ENABLED()  (Capacity_Boost == Capacity_Boost_Enabled)
-    //#define CAPACITY_BOOST_DISABLED() (Capacity_Boost == Capacity_Boost_Disabled)
-    else if(type == "Capacity")
-	{
-		if(CAPACITY_BOOST_ENABLED()){
-			retValue = "Capacity1";
-		}
-		else if(CAPACITY_BOOST_DISABLED()){
-			retValue = "Capacity2";
-		}
-		else{
-			retValue = "Capacity1";
-		}
-    }  
+    
     //CurrentControl
     //#define CURRENT_CONTROL_1p0_KW()            (Current_Control == CurrentControl_1p0_kW)
     //#define CURRENT_CONTROL_2p0_KW()            (Current_Control == CurrentControl_2p0_kW)

@@ -1,3 +1,5 @@
+/*
+
 //——————————————————————————————————————————————————————————————————————————————
 // Description: Inverter Upgrade
 // Author: Adam Saiyad, Julius Calzada (julius.jai@gmail.com)
@@ -416,3 +418,4 @@ void LEAF_CAN_Handler_Inverter_Upgrade(uint8_t can_bus, can_frame_t new_rx_frame
   }
   //--- End of Messages Gateway
 }
+*/
